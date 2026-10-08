@@ -12,12 +12,12 @@ export const getTodos = async (req, res) => {
 
 export const createTodo = async (req, res) => {
   try {
-    const { text, priority } = req.body;
+    const { text, priority, due_date } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'Task text is required' });
     }
 
-    const newTodo = await todoService.createTodo(text.trim(), priority);
+    const newTodo = await todoService.createTodo(text.trim(), priority, due_date);
     res.status(201).json(newTodo);
   } catch (err) {
     console.error('createTodo error:', err.message);
@@ -25,23 +25,18 @@ export const createTodo = async (req, res) => {
   }
 };
 
-export const toggleTodo = async (req, res) => {
+export const updateTodo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { completed } = req.body;
+    const updated = await todoService.updateTodo(id, req.body);
 
-    if (typeof completed !== 'boolean') {
-      return res.status(400).json({ error: 'completed must be a boolean' });
-    }
-
-    const updated = await todoService.updateTodoStatus(id, completed);
     if (!updated) {
-      return res.status(404).json({ error: 'Task not found' });
+      return res.status(404).json({ error: 'Task not found or no changes made' });
     }
 
     res.json(updated);
   } catch (err) {
-    console.error('toggleTodo error:', err.message);
+    console.error('updateTodo error:', err.message);
     res.status(500).json({ error: 'Failed to update task' });
   }
 };
@@ -59,5 +54,15 @@ export const removeTodo = async (req, res) => {
   } catch (err) {
     console.error('removeTodo error:', err.message);
     res.status(500).json({ error: 'Failed to delete task' });
+  }
+};
+
+export const clearCompleted = async (req, res) => {
+  try {
+    const count = await todoService.clearCompletedTodos();
+    res.json({ message: `Cleared ${count} completed tasks`, count });
+  } catch (err) {
+    console.error('clearCompleted error:', err.message);
+    res.status(500).json({ error: 'Failed to clear completed tasks' });
   }
 };
